@@ -1,3 +1,5 @@
+enablePlugins(JavaAppPackaging)
+
 name := "robo-voice-interview"
 
 version := "0.1"
