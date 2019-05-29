@@ -1,6 +1,6 @@
 enablePlugins(JavaAppPackaging)
 
-name := "robo-voice-interview"
+name := "akka-fileupload-interview"
 
 version := "0.1"
 
