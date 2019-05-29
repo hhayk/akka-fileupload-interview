@@ -56,29 +56,14 @@ object ImgurClient extends Directives with ImgurJsonSupport {
     (file, fileName)
   }
 
-  def delete(uri: String, downloadDir: String)(implicit system: ActorSystem): Future[String] = {
+  def download(uri: String)(implicit system: ActorSystem): Future[String] = {
     implicit val ec = system.dispatcher
     implicit val materializer = ActorMaterializer()
 
     val request = HttpRequest(uri = uri)
 
     Http().singleRequest(request).flatMap { response =>
-      val (file, fileName) = destinationFile(downloadDir, response)
-      val source = response.entity.dataBytes
-      source.runWith(FileIO.toPath(file.toPath)) flatMap { _ =>
-        Future(fileName)
-      }
-    }
-  }
-
-  def download(uri: String, downloadDir: String)(implicit system: ActorSystem): Future[String] = {
-    implicit val ec = system.dispatcher
-    implicit val materializer = ActorMaterializer()
-
-    val request = HttpRequest(uri = uri)
-
-    Http().singleRequest(request).flatMap { response =>
-      val (file, fileName) = destinationFile(downloadDir, response)
+      val (file, fileName) = destinationFile(ImgurConfiguration.directory, response)
       val source = response.entity.dataBytes
       source.runWith(FileIO.toPath(file.toPath)) flatMap { _ =>
         Future(fileName)

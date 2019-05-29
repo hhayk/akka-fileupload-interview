@@ -4,12 +4,19 @@ import SlaveDownloadImage.DownloadImageUrl
 import SlaveUploadImage.UploadImage
 import SupervisorDownloadImage.{DownloadImageComplete, DownloadImages, UploadImageComplete, UploadImageFailure}
 import akka.actor.{Actor, ActorLogging, Props}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.ActorMaterializer
+import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.Future
 
+case class Images(urls: List[String])
+
+object ImageJsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
+  implicit val imagesFormat = jsonFormat1(Images)
+}
+
 abstract class AbstractDownloadImage extends Actor with ActorLogging {
-  lazy val directory = context.system.settings.config.getConfig("robo-voice-system").getString("tempDir")
   implicit val materializer = ActorMaterializer()
   implicit val ec = context.system.dispatcher
 }
@@ -41,21 +48,21 @@ class SupervisorDownloadImage extends AbstractDownloadImage {
     }
 
     case UploadImageComplete(fileName: String) => {
-      cleanup(fileName, directory)
+      cleanup(fileName)
     }
 
     case UploadImageFailure(fileName: String) => {
-      cleanup(fileName, directory)
+      cleanup(fileName)
     }
   }
 
   def createTempFolderIfNotExist(): Unit = {
-    val dir = new File(directory)
+    val dir = new File(ImgurConfiguration.directory)
     if (!dir.exists()) dir.mkdirs()
   }
 
-  def cleanup(fileName: String, downloadDir: String): Unit = {
-    val file = new File(downloadDir, fileName)
+  def cleanup(fileName: String): Unit = {
+    val file = new File(ImgurConfiguration.directory, fileName)
     if (file.exists()) {
       log.info(s"Cleanup Local Copy Image With Name : $fileName")
 
@@ -76,7 +83,7 @@ class SlaveDownloadImage extends AbstractDownloadImage {
       log.info(s"Start Download Image at URL : $uri")
 
       val originalSender = sender
-      ImgurClient.download(uri, directory)(context.system).flatMap {
+      ImgurClient.download(uri)(context.system).flatMap {
         fileName: String => {
           log.info(s"Complete Download Image With Name : $fileName")
 

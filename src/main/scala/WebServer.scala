@@ -1,6 +1,8 @@
+import ImageJsonSupport._
 import SupervisorDownloadImage.DownloadImages
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.common.{EntityStreamingSupport, JsonEntityStreamingSupport}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives
@@ -8,10 +10,8 @@ import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 import spray.json.DefaultJsonProtocol
 
-case class Images(urls: List[String])
-
 trait JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
-  implicit val imagesFormat = jsonFormat1(Images)
+  implicit val jsonStreamingSupport: JsonEntityStreamingSupport = EntityStreamingSupport.json()
 }
 
 trait RestApi extends Directives with JsonSupport {
@@ -32,14 +32,14 @@ trait RestApi extends Directives with JsonSupport {
       post {
         entity(as[Images]) { images =>
           system.actorOf(Props[SupervisorDownloadImage]) ! DownloadImages(images.urls.toSet)
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Images"))
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Processing Images"))
         }
       }
     } ~
       path("v2" / "images" / "upload") {
         post {
           entity(as[Images]) { images =>
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Akka Stream Implementation"))
+            complete(new ProcessImageV2().processImage(images.urls.toSet))
           }
         }
       }
