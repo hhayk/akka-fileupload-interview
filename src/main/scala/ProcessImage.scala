@@ -112,13 +112,13 @@ class SlaveUploadImage extends AbstractDownloadImage with JsonSupport {
           log.info(s"Success Upload Image With Link : $link")
 
           originalSender ! UploadImageComplete(fileName)
-          Future(link)
+          Future.successful()
         }
         case ImgurResponseFailure(_, message, _) => {
           log.info(s"Failure Upload Image With Message : $message")
 
           originalSender ! UploadImageFailure(fileName)
-          Future()
+          Future.successful()
         }
       }
     }
