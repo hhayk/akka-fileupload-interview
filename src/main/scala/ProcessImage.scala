@@ -38,9 +38,9 @@ class SupervisorDownloadImage extends AbstractDownloadImage {
     case DownloadImages(urls: Set[String]) => {
       createTempFolderIfNotExist()
 
-      urls.foreach(url => {
-        context.actorOf(Props[SlaveDownloadImage]) ! DownloadImageUrl(url)
-      })
+      urls.foreach(context.actorOf(Props[SlaveDownloadImage]) ! DownloadImageUrl(_))
+
+      sender() ! "Starting"
     }
 
     case DownloadImageComplete(fileName: String) => {
