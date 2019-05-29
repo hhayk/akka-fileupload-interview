@@ -1,3 +1,5 @@
+import java.io.File
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.stream.ActorMaterializer
@@ -10,6 +12,11 @@ object ProcessImageV2JsonSupport extends DefaultJsonProtocol with SprayJsonSuppo
 }
 
 class ProcessImageV2 extends {
+  def createTempFolderIfNotExist(): Unit = {
+    val dir = new File(ImgurConfiguration.directory)
+    if (!dir.exists()) dir.mkdirs()
+  }
+
   def processImage(urls: Set[String])(implicit system: ActorSystem) = {
     implicit val materializer = ActorMaterializer()
     implicit val ec = system.dispatcher
@@ -27,10 +34,12 @@ class ProcessImageV2 extends {
       ImgurClient.upload(fileName)(system)
     }
 
+    createTempFolderIfNotExist()
+
     val source = Source(downloadFutures)
     val flow1 = Flow[Future[String]].mapAsync[String](cores)(identity)
     val flow2 = Flow[String].map(uploadFutures)
-    val flow3 = Flow[Future[ImgurResponse]].mapAsync[ImgurResponse](cores)(f => f)
+    val flow3 = Flow[Future[ImgurResponse]].mapAsync[ImgurResponse](cores)(identity)
     val flow4 = Flow[ImgurResponse].map {
       case resp: ImgurResponseSuccess => {
         log.info(s"Success Upload Image With Link : ${resp.link}")
