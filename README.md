@@ -10,7 +10,7 @@ httpie (brew install httpie) - for test
 
 `sbt docker:publishLocal`
 
-`docker run -p 8080:8080 robo-voice-interview:0.1`
+`docker run -p 8080:8080 akka-fileupload-interview:0.1`
 
 **HealthCheck**
 
