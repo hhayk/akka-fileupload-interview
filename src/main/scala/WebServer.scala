@@ -42,6 +42,13 @@ trait RestApi extends Directives with JsonSupport {
             complete(new ProcessImageV2().processImage(images.urls.toSet))
           }
         }
+      } ~
+      path("v3" / "images" / "upload") {
+        post {
+          entity(as[Images]) { images =>
+            complete(new ProcessImageV3().processImage(images.urls.toSet))
+          }
+        }
       }
 
   val route = ping ~ images
@@ -58,10 +65,10 @@ object WebServer extends App with RestApi {
 
   val bindingFuture = Http().bindAndHandle(route, host, port)
   println(s"Server online at http://$host:$port/\n")
-//  println(s"Server online at http://$host:$port/\nPress RETURN to stop...")
-//  scala.io.StdIn.readLine()
+  //  println(s"Server online at http://$host:$port/\nPress RETURN to stop...")
+  //  scala.io.StdIn.readLine()
 
-//  bindingFuture
-//    .flatMap(_.unbind())
-//    .onComplete(_ => system.terminate())
+  //  bindingFuture
+  //    .flatMap(_.unbind())
+  //    .onComplete(_ => system.terminate())
 }
